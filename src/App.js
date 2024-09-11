@@ -4,6 +4,10 @@ import CreateGroup from './Component/CreateGroup';
 import NavBar from './Component/navbar/NavBar';
 import { useRoutes } from 'react-router-dom';
 import NotFoundPage from './Component/NotFoundPage'
+import { useEffect } from 'react';
+import axios from 'axios';
+import { host } from './host';
+
 
 export default function App() {
   const routes = [
@@ -15,12 +19,24 @@ export default function App() {
 
   const element = useRoutes(routes);
 
-  return (
-    <div className="w-full flex flex-col min-h-screen">
-      <NavBar />
-      <main className="flex-grow">
-        {element}
-      </main>
-    </div>
-  );
-}
+  
+
+  useEffect(() => {
+    axios.get(`${host}/DB/db.php`)
+      .then((response) => {
+        console.log('Response from PHP:', response.data);
+      })
+      .catch((error) => {
+        console.error('Error fetching PHP API:', error);
+      });
+  }, []); 
+
+    return (
+      <div className="w-full flex flex-col min-h-screen">
+        <NavBar />
+        <main className="flex-grow">
+          {element}
+        </main>
+      </div>
+    );
+  }
