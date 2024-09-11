@@ -33,7 +33,6 @@ const FontUploader = () => {
   const fetchFonts = () => {
     axios.get(`${host}/fontFile.php`)
       .then(response => {
-        console.log(response.data.fonts);
         setFonts(response.data.fonts || []);
       })
       .catch((error) => {
