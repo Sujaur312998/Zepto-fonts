@@ -1,7 +1,7 @@
 <?php
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: *");
-header("Access-Control-Allow-Methods: *");
+header("Access-Control-Allow-Methods: POST");
 header('Content-Type: application/json');
 
 // Include the Database class
@@ -40,11 +40,10 @@ if (isset($_FILES['fontFile'])) {
             $response['message'] = "File uploaded successfully";
             $response['fileName'] = $fileName;
             $response['filePath'] = $targetFilePath; // relative path for front-end
-            // $response['absoluteFilePath'] = $absoluteFilePath; // absolute path for back-end processing
 
             // Insert file information into the database
-            $stmt = $connection->prepare("INSERT INTO uploaded_font (name, location) VALUES (?, ?)");
-            $stmt->bind_param("ss", $fileName, $targetFilePath);
+            $stmt = $connection->prepare("INSERT INTO uploaded_font (name) VALUES (?)");
+            $stmt->bind_param("s", $fileName);
 
             if ($stmt->execute()) {
                 $response['dbMessage'] = "Data inserted into database successfully";

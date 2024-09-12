@@ -26,13 +26,17 @@ class Database {
 
         if ($result->num_rows == 0) {
             if ($this->conn->query($createTableQuery) === TRUE) {
-                echo "Table '$tableName' created successfully";
+                echo "Table '$tableName' created successfully\n";
             } else {
-                echo "Error creating table: " . $this->conn->error;
+                echo "Error creating table '$tableName': " . $this->conn->error . "\n";
             }
         } else {
-            echo "Table '$tableName' already exists";
+            echo "Table '$tableName' already exists\n";
         }
+    }
+
+    public function lastInsertId() {
+        return $this->conn->insert_id;
     }
 
     public function close() {
