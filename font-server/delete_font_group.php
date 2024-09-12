@@ -16,17 +16,18 @@ $conn = $db->getConnection();
 $input = file_get_contents('php://input');
 $data = json_decode($input, true);
 
-// Validate input
-if (!isset($data['fontGroup'])) {
+
+if (!isset($data['fontGroup']) || !isset($data['groupTitle'])) {
     echo json_encode(['error' => 'Invalid input: fontGroup is required']);
     exit();
 }
 
-$groupTitle = $data['fontGroup'];
+$groupTitle = $data['groupTitle'];
+$fontGroup = $data['fontGroup'];
 
-// Prepare and execute deletion query for font group
-$deleteGroupFontQuery = "DELETE FROM font_groups WHERE fontGroup = ?";
+$deleteGroupFontQuery = "DELETE FROM font_groups WHERE groupTitle = ?";
 $stmtFontGroup = $conn->prepare($deleteGroupFontQuery);
+
 if ($stmtFontGroup === false) {
     echo json_encode(['error' => 'Failed to prepare statement for deleting font group']);
     exit();
@@ -39,29 +40,33 @@ if ($resultFontGroup === false) {
     echo json_encode(['error' => 'Failed to execute statement for deleting font group']);
     exit();
 }
+$stmtFontGroup->close();
 
-// Prepare and execute deletion query for associated fonts
+
 $deleteOwnFontQuery = "DELETE FROM own_font WHERE id = ?";
 $stmtOwnFont = $conn->prepare($deleteOwnFontQuery);
+
 if ($stmtOwnFont === false) {
-    echo json_encode(['error' => 'Failed to prepare statement for deleting associated fonts']);
+    echo json_encode(['error' => 'Failed to prepare statement for deleting font group']);
     exit();
 }
 
-$stmtOwnFont->bind_param('s', $groupTitle);
-$resultOwnFont = $stmtOwnFont->execute();
-if ($resultOwnFont === false) {
-    echo json_encode(['error' => 'Failed to execute statement for deleting associated fonts']);
-    exit();
-}
+$fontGroupIds = [];
+foreach ($fontGroup as $font) {
+    if (!$font['fontGroup']) {
+        echo json_encode(['error' => 'Failed to get own fontid']);
+        exit();
+    }
+    $id = (int) $font['fontGroup'];
+    $stmtOwnFont->bind_param('i', $id);
+    $resultOwnFont = $stmtOwnFont->execute();
 
-// Close statements
-$stmtFontGroup->close();
+    if ($resultOwnFont === false) {
+        echo json_encode(['error' => 'Failed to execute statement for deleting Own font group']);
+        exit();
+    }
+}
 $stmtOwnFont->close();
+echo json_encode($resultOwnFont)
 
-// Close connection
-$conn->close();
-
-// Respond with success
-echo json_encode(['success' => true]);
 ?>

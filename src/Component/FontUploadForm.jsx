@@ -96,19 +96,25 @@ const FontUploader = () => {
 
   // Handle Delete Font
   const handleDeleteFont = (id) => {
-    axios.post(`${host}/delete_font.php`, { id })
-      .then(response => {
-        if (response.data.status === 'success') {
-          fetchFonts(); // Refresh the font list after deletion
-        } else {
-          setErrorMessage(response.data.message);
-        }
-      })
-      .catch(error => {
-        setErrorMessage("Error deleting font");
-        console.error('Error:', error);
-      });
+    axios.post(`http://localhost/font-server/delete_font.php`, JSON.stringify({ id }), {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => {
+      console.log('Response:', response.data);
+      if (response.data) {
+        fetchFonts(); // Refresh the font list after deletion
+      } else {
+        setErrorMessage(response.data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error deleting font:', error);
+      setErrorMessage("Error deleting font");
+    });
   };
+  
 
   // Handle drag over event
   const handleDragOver = (e) => {
