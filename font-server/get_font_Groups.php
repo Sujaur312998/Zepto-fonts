@@ -54,6 +54,7 @@ foreach ($response as $entry) {
     $groupTitle = $entry['groupTitle'];
     if (!isset($result[$groupTitle])) {
         $result[$groupTitle] = [
+            'id'=> $entry['id'],
             "groupTitle" => $groupTitle,
             "fontGroup" => []
         ];

@@ -1,8 +1,9 @@
 import axios from 'axios'
-import React, { useEffect , useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import TextField from '@mui/material/TextField';
 import { styled } from '@mui/material/styles';
 import { host } from '../host';
+import { useLocation } from 'react-router-dom';
 
 const CustomTextField = styled(TextField)(({ theme }) => ({
     '& .MuiInputBase-root': {
@@ -12,7 +13,7 @@ const CustomTextField = styled(TextField)(({ theme }) => ({
 }));
 
 
-const CreateGroup = () => {
+const CreateGroup = ({ header }) => {
     const font_group = {
         font_name: '',
         font_title: '',
@@ -20,9 +21,24 @@ const CreateGroup = () => {
         price_change: 0
     }
 
+    const [update, setUpdate] = useState(false)
     const [groupTitle, setGroupTitle] = useState('')
-    const [fontGroup, setFontGroup] = useState([font_group])
+    const [fontGroup, setFontGroup] = useState([])
     const [fonts, setFonts] = useState([])
+    const location = useLocation();
+    const fontGroupItem = location.state?.fontGroupItem;
+
+    useEffect(() => {
+        if (fontGroupItem) {
+            setUpdate(true)
+            setGroupTitle(fontGroupItem.groupTitle)
+            setFontGroup(fontGroupItem.fontGroup)
+        } else {
+            setGroupTitle('')
+            setFontGroup([font_group])
+        }
+
+    }, [fontGroupItem])
 
     // Fetch fonts from the server
     const fetchFonts = () => {
@@ -45,12 +61,28 @@ const CreateGroup = () => {
         setFontGroup(list)
     }
 
-    const handleDelete = (index) => {
+    const handleDelete = (index, item) => {
+
+        if (item.fontGroup) {
+            console.log(fontGroup);
+            axios.post(`${host}/delete_font_onUpdate.php`, { fontGroup: item.fontGroup }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            }).then(response => {
+                console.log(response.data);
+            }).catch(error => {
+                console.log(error);
+            })
+
+        }
         const list = [...fontGroup]
         if (list.length > 1) {
             list.splice(index, 1);
             setFontGroup(list);
         }
+
+
 
     }
 
@@ -60,18 +92,34 @@ const CreateGroup = () => {
                 groupTitle,
                 fontGroup,
             };
-            console.log(data);
-            
-            axios.post(`${host}/create_font_Groups.php`,data,{
+
+            axios.post(`${host}/create_font_Groups.php`, data, {
                 headers: {
                     'Content-Type': 'application/json',
                 }
-            }).then(response=>{
+            }).then(response => {
                 console.log(response.data);
-            }).catch(error=>{
+            }).catch(error => {
                 console.log(error);
             })
         }
+    }
+
+    const handleUpdate = () => {
+        const data = {
+            groupTitle,
+            fontGroup,
+        };
+        axios.post(`${host}/update_font_groups.php`, data, {
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(response => {
+            console.log(response.data);
+        }).catch(error => {
+            console.log(error);
+        })
+
     }
 
     const hanndleChanges = (e, index) => {
@@ -84,10 +132,10 @@ const CreateGroup = () => {
         setFontGroup(list)
     }
 
-    
+
     return (
         <div className="mx-auto w-[80%] my-5 p-6  ">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-2">Create Font Group</h2>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-2">{header}</h2>
             <p className="text-sm text-gray-500 mb-4">You have to select at least two fonts</p>
             <input
                 type="text"
@@ -120,11 +168,11 @@ const CreateGroup = () => {
                                         className='w-full px-4 py-1 col-span-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-black'>
                                         <option value="" hidden >Select a Font</option>
                                         {
-                                            fonts?.map(font=>{
+                                            fonts?.map(font => {
                                                 return <option key={font.id} value={font.id}>{font.name}</option>
                                             })
                                         }
-                                        
+
                                     </select>
 
                                     {/* Specific Size */}
@@ -161,7 +209,7 @@ const CreateGroup = () => {
 
                                 </div>
                                 <button
-                                    onClick={() => handleDelete(index)}
+                                    onClick={() => handleDelete(index, item)}
                                     className='pl-2 text-red-600'
                                 >
                                     X
@@ -183,10 +231,10 @@ const CreateGroup = () => {
                     + Add Row
                 </button>
                 <button
-                    onClick={handleCreate}
+                    onClick={update ? handleUpdate : handleCreate}
                     className="px-4 py-1 bg-green-500 text-white rounded-md shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-300 transition duration-300"
                 >
-                    Create
+                    {update ? "Update" : "Create"}
                 </button>
             </div>
 

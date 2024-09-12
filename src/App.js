@@ -12,7 +12,8 @@ import { host } from './host';
 export default function App() {
   const routes = [
     { path: '/', element: <FontUploadForm /> },
-    { path: '/create_group', element:<CreateGroup />  },
+    { path: '/create_group', element:<CreateGroup header='Create Font Group'/>  },
+    { path: '/update_group', element:<CreateGroup header='Update Font Group'/>  },
     { path: '/font_groups', element: <FontGroup /> },
     { path: '*', element: <NotFoundPage /> },
   ];

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { host } from '../host';
+import { useNavigate } from 'react-router-dom';
 
 const FontGroup = () => {
     const [fontGroup, setFontGroup] = useState()
-
+    const navigate = useNavigate();
     useEffect(() => {
         axios.get(`${host}/get_font_Groups.php`, {
             headers: {
@@ -20,9 +21,10 @@ const FontGroup = () => {
     }, [])
 
     const handleEdit = (item) => {
-        console.log(item);
-
-    }
+        navigate('/update_group', {
+            state: { fontGroupItem: item } // Pass the item as state
+        });
+    };
     const handleDelete = (item) => {
         console.log(item);
 
