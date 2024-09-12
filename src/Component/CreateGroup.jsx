@@ -4,6 +4,7 @@ import TextField from '@mui/material/TextField';
 import { styled } from '@mui/material/styles';
 import { host } from '../host';
 import { useLocation } from 'react-router-dom';
+import Loader from "./loader/Loader";
 
 const CustomTextField = styled(TextField)(({ theme }) => ({
     '& .MuiInputBase-root': {
@@ -20,7 +21,7 @@ const CreateGroup = ({ header }) => {
         specific_size: 1.00,
         price_change: 0
     }
-
+    const [isLoading, setIsLoading] = useState(false)
     const [update, setUpdate] = useState(false)
     const [groupTitle, setGroupTitle] = useState('')
     const [fontGroup, setFontGroup] = useState([])
@@ -28,25 +29,25 @@ const CreateGroup = ({ header }) => {
     const location = useLocation();
     const fontGroupItem = location.state?.fontGroupItem;
 
-    useEffect(() => {
-        if (fontGroupItem) {
-            setUpdate(true)
-            setGroupTitle(fontGroupItem.groupTitle)
-            setFontGroup(fontGroupItem.fontGroup)
-        } else {
-            setGroupTitle('')
-            setFontGroup([font_group])
-        }
+    console.log(!fontGroupItem, update);
 
+
+    useEffect(() => {
+        setUpdate(true)
+        setGroupTitle(fontGroupItem?.groupTitle || '')
+        setFontGroup(fontGroupItem?.fontGroup || [font_group])
     }, [fontGroupItem])
 
     // Fetch fonts from the server
     const fetchFonts = () => {
+        setIsLoading(true)
         axios.get(`${host}/fontFile.php`)
             .then(response => {
+                setIsLoading(false)
                 setFonts(response.data.fonts || []);
             })
             .catch((error) => {
+                setIsLoading(false)
                 console.log(error);
             });
     };
@@ -62,16 +63,17 @@ const CreateGroup = ({ header }) => {
     }
 
     const handleDelete = (index, item) => {
-
-        if (item.fontGroup) {
-            console.log(fontGroup);
+        setIsLoading(true)
+        if (update) {
             axios.post(`${host}/delete_font_onUpdate.php`, { fontGroup: item.fontGroup }, {
                 headers: {
                     'Content-Type': 'application/json',
                 }
             }).then(response => {
+                setIsLoading(false)
                 console.log(response.data);
             }).catch(error => {
+                setIsLoading(false)
                 console.log(error);
             })
 
@@ -87,6 +89,7 @@ const CreateGroup = ({ header }) => {
     }
 
     const handleCreate = () => {
+        setIsLoading(true)
         if (fontGroup.length > 1) {
             const data = {
                 groupTitle,
@@ -98,14 +101,18 @@ const CreateGroup = ({ header }) => {
                     'Content-Type': 'application/json',
                 }
             }).then(response => {
+                setIsLoading(false)
+                alert("Font Group Successfully Added!!!")
                 console.log(response.data);
             }).catch(error => {
+                setIsLoading(false)
                 console.log(error);
             })
         }
     }
 
     const handleUpdate = () => {
+        setIsLoading(true)
         const data = {
             groupTitle,
             fontGroup,
@@ -115,8 +122,11 @@ const CreateGroup = ({ header }) => {
                 'Content-Type': 'application/json',
             }
         }).then(response => {
+            setIsLoading(false)
+            alert("Font Group Successfully Updated!!!")
             console.log(response.data);
         }).catch(error => {
+            setIsLoading(false)
             console.log(error);
         })
 
@@ -133,112 +143,121 @@ const CreateGroup = ({ header }) => {
     }
 
 
-    return (
-        <div className="mx-auto w-[80%] my-5 p-6  ">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-2">{header}</h2>
-            <p className="text-sm text-gray-500 mb-4">You have to select at least two fonts</p>
-            <input
-                type="text"
-                value={groupTitle}
-                onChange={(e) => setGroupTitle(e.target.value)}
-                placeholder="Group Title"
-                className="w-full px-4 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-black"
-            />
-            <ul className=''>
-                {
-                    fontGroup.map((item, index) => {
-                        return (
-                            <li key={index} className='flex items-center justify-center bg-white shadow-lg rounded-lg my-3 px-5 '>
-                                <div className='grid grid-cols-12 my-3 p-1 gap-2'>
+    return (<>
 
-                                    {/* Font Name */}
-                                    <input
-                                        name='font_name'
-                                        type="text"
-                                        placeholder="Font Name"
-                                        value={item.font_name}
-                                        onChange={(e) => hanndleChanges(e, index)}
-                                        className="w-full px-4 py-1 col-span-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-black"
-                                    />
-                                    {/* Select Font */}
-                                    <select
-                                        name='font_title'
-                                        value={item.font_title}
-                                        onChange={(e) => hanndleChanges(e, index)}
-                                        className='w-full px-4 py-1 col-span-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-black'>
-                                        <option value="" hidden >Select a Font</option>
-                                        {
-                                            fonts?.map(font => {
-                                                return <option key={font.id} value={font.id}>{font.name}</option>
-                                            })
-                                        }
+        {isLoading ? <Loader /> :
+            <div className="mx-auto w-[80%] my-5 p-6  ">
+                <h2 className="text-2xl font-semibold text-gray-800 mb-2">{header}</h2>
+                <p className="text-sm text-gray-500 mb-4">You have to select at least two fonts</p>
+                <input
+                    type="text"
+                    value={groupTitle}
+                    onChange={(e) => setGroupTitle(e.target.value)}
+                    placeholder="Group Title"
+                    className="w-full px-4 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-black"
+                />
+                <ul className=''>
+                    {
+                        fontGroup?.map((item, index) => {
+                            return (
+                                <li key={index} className='flex items-center justify-center bg-white shadow-lg rounded-lg my-3 px-5 '>
+                                    <div className='grid grid-cols-12 my-3 p-1 gap-2'>
 
-                                    </select>
+                                        {/* Font Name */}
+                                        <input
+                                            name='font_name'
+                                            type="text"
+                                            placeholder="Font Name"
+                                            value={item.font_name}
+                                            onChange={(e) => hanndleChanges(e, index)}
+                                            className="w-full px-4 py-1 col-span-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-black"
+                                        />
+                                        {/* Select Font */}
+                                        <select
+                                            name='font_title'
+                                            value={item.font_title}
+                                            onChange={(e) => hanndleChanges(e, index)}
+                                            className='w-full px-4 py-1 col-span-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-black'>
+                                            <option value="" hidden >Select a Font</option>
+                                            {
+                                                fonts?.map(font => {
+                                                    return <option key={font.id} value={font.id}>{font.name}</option>
+                                                })
+                                            }
 
-                                    {/* Specific Size */}
-                                    <CustomTextField
-                                        name='specific_size'
-                                        label="Specific Size"
-                                        type="number"
-                                        variant="outlined"
-                                        className="col-span-3"
-                                        value={item.specific_size}
-                                        onChange={(e) => hanndleChanges(e, index)}
-                                        slotProps={{
-                                            inputLabel: {
-                                                shrink: true,
-                                            },
-                                        }}
-                                    />
+                                        </select>
 
-                                    {/* Price Change */}
-                                    <CustomTextField
-                                        name='price_change'
-                                        label="Price Change"
-                                        type="number"
-                                        variant="outlined"
-                                        className="col-span-3"
-                                        value={item.price_change}
-                                        onChange={(e) => hanndleChanges(e, index)}
-                                        slotProps={{
-                                            inputLabel: {
-                                                shrink: true,
-                                            },
-                                        }}
-                                    />
+                                        {/* Specific Size */}
+                                        <CustomTextField
+                                            name='specific_size'
+                                            label="Specific Size"
+                                            type="number"
+                                            variant="outlined"
+                                            className="col-span-3"
+                                            value={item.specific_size}
+                                            onChange={(e) => hanndleChanges(e, index)}
+                                            slotProps={{
+                                                inputLabel: {
+                                                    shrink: true,
+                                                },
+                                            }}
+                                        />
 
-                                </div>
-                                <button
-                                    onClick={() => handleDelete(index, item)}
-                                    className='pl-2 text-red-600'
-                                >
-                                    X
-                                </button>
+                                        {/* Price Change */}
+                                        <CustomTextField
+                                            name='price_change'
+                                            label="Price Change"
+                                            type="number"
+                                            variant="outlined"
+                                            className="col-span-3"
+                                            value={item.price_change}
+                                            onChange={(e) => hanndleChanges(e, index)}
+                                            slotProps={{
+                                                inputLabel: {
+                                                    shrink: true,
+                                                },
+                                            }}
+                                        />
 
-                            </li>
-
-                        )
-                    })
-                }
-            </ul>
+                                    </div>
+                                    {fontGroup?.length > 1 ?
+                                        <button
+                                            onClick={() => handleDelete(index, item)}
+                                            className='pl-2 text-red-600'
+                                        >
+                                            X
+                                        </button> : null
+                                    }
 
 
-            <div className='flex justify-between mt-6'>
-                <button
-                    onClick={handleAddRow}
-                    className="px-2 py-1 text-gray-900 rounded-md shadow-md  focus:outline-none focus:ring-1 focus:ring-black border-2 "
-                >
-                    + Add Row
-                </button>
-                <button
-                    onClick={update ? handleUpdate : handleCreate}
-                    className="px-4 py-1 bg-green-500 text-white rounded-md shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-300 transition duration-300"
-                >
-                    {update ? "Update" : "Create"}
-                </button>
+                                </li>
+
+                            )
+                        })
+                    }
+                </ul>
+
+
+                <div className='flex justify-between mt-6'>
+                    <button
+                        onClick={handleAddRow}
+                        className="px-2 py-1 text-gray-900 rounded-md shadow-md  focus:outline-none focus:ring-1 focus:ring-black border-2 "
+                    >
+                        + Add Row
+                    </button>
+                    <button
+                        onClick={update ? handleUpdate : handleCreate}
+                        disabled={fontGroup?.length > 1 ? false : true}
+                        className="px-4 py-1 bg-green-500 text-white rounded-md shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-300 transition duration-300"
+                    >
+                        {update ? "Update" : "Create"}
+                    </button>
+                </div>
+
             </div>
+        }
+    </>
 
-        </div>
     )
 
 }

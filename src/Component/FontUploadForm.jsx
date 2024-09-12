@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { host } from '../host';
+import Loader from "./loader/Loader";
 
 const FontUploader = () => {
   const [fontFile, setFontFile] = useState(null);
   const [fonts, setFonts] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [uploadMessage, setUploadMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false)
 
   // Function to handle file upload using Axios
   const uploadFile = (formData) => {
+    setIsLoading(true)
     axios.post(`${host}/uploadFont.php`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     })
       .then(response => {
+        setIsLoading(false)
         if (response.data.error) {
           setUploadMessage(response.data.error);
         } else {
@@ -24,6 +28,7 @@ const FontUploader = () => {
         }
       })
       .catch((error) => {
+        setIsLoading(false)
         setUploadMessage("Error uploading file");
         console.error('Error:', error);
       });
@@ -31,11 +36,14 @@ const FontUploader = () => {
 
   // Fetch fonts from the server
   const fetchFonts = () => {
+    setIsLoading(true)
     axios.get(`${host}/fontFile.php`)
       .then(response => {
+        setIsLoading(false)
         setFonts(response.data.fonts || []);
       })
       .catch((error) => {
+        setIsLoading(false)
         console.log(error);
         setErrorMessage("Error fetching fonts");
       });
@@ -96,87 +104,97 @@ const FontUploader = () => {
 
   // Handle Delete Font
   const handleDeleteFont = (id) => {
-    axios.post(`http://localhost/font-server/delete_font.php`, JSON.stringify({ id }), {
+    setIsLoading(true)
+    axios.post(`${host}/delete_font.php`, JSON.stringify({ id }), {
       headers: {
         'Content-Type': 'application/json'
       }
     })
-    .then(response => {
-      console.log('Response:', response.data);
-      if (response.data) {
-        fetchFonts(); // Refresh the font list after deletion
-      } else {
-        setErrorMessage(response.data.message);
-      }
-    })
-    .catch(error => {
-      console.error('Error deleting font:', error);
-      setErrorMessage("Error deleting font");
-    });
+      .then(response => {
+        console.log('Response:', response.data);
+        setIsLoading(false)
+        if (response.data) {
+          fetchFonts(); // Refresh the font list after deletion
+        } else {
+          setErrorMessage(response.data.message);
+        }
+      })
+      .catch(error => {
+        setIsLoading(false)
+        console.error('Error deleting font:', error);
+        setErrorMessage("Error deleting font");
+      });
   };
-  
+
 
   // Handle drag over event
   const handleDragOver = (e) => {
     e.preventDefault();
   };
 
-  return (
-    <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <div
-        className="flex flex-col items-center justify-center h-40 w-full sm:w-3/4 lg:w-1/2 border-2 border-dashed border-gray-400 rounded-lg text-gray-500 cursor-pointer mx-auto"
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-      >
-        {fontFile ? (
-          <p className="text-green-500 text-sm sm:text-lg">Font file: {fontFile.name}</p>
-        ) : (
-          <p className="text-sm sm:text-lg">Drag & Drop .ttf file here</p>
-        )}
-        {errorMessage && <p className="text-red-500 text-sm sm:text-md">{errorMessage}</p>}
-      </div>
-      {uploadMessage && <p className="mt-4 text-center text-sm sm:text-md">{uploadMessage}</p>}
-
-      <div className="overflow-x-auto my-5">
-        <b className="text-lg sm:text-xl">Our Fonts</b>
-        <p className="text-xs sm:text-sm text-gray-400 my-2">
-          Browse a list of Zepto fonts to build your font group.
-        </p>
-        <table className="min-w-full bg-white border my-2 border-gray-200 rounded-lg shadow-md">
-          <thead className="bg-gray-100 text-gray-600 uppercase text-xs sm:text-sm">
-            <tr className="text-left">
-              <th className="py-3 px-4 border-b">Font Name</th>
-              <th className="py-3 px-4 border-b">Preview</th>
-              <th className="py-3 px-4 border-b">Action</th>
-            </tr>
-          </thead>
-          <tbody className="text-gray-700 text-xs sm:text-sm">
-            {fonts.length > 0 ? (
-              fonts.map((font) => {
-                const name = font.name.split('.')[0]; // Use the name part before the extension
-                return (
-                  <tr key={font.id} className="hover:bg-zinc-50">
-                    <td className="py-3 px-4 border-b">
-                      {font.name}
-                    </td>
-                    <td className="py-3 px-4 border-b my-font" style={{ fontFamily: `${name}` }}>
-                      Example Style
-                    </td>
-                    <td className="py-3 px-4 border-b text-red-600 cursor-pointer">
-                      <button onClick={() => handleDeleteFont(font.id)}>Delete</button>
-                    </td>
-                  </tr>
-                );
-              })
+  return (<>
+    {
+      isLoading ? <Loader /> :
+        <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
+          <div
+            className="flex flex-col items-center justify-center h-40 w-full sm:w-3/4 lg:w-1/2 border-2 border-dashed border-gray-400 rounded-lg text-gray-500 cursor-pointer mx-auto"
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+          >
+            {fontFile ? (
+              <p className="text-green-500 text-sm sm:text-lg">Font file: {fontFile.name}</p>
             ) : (
-              <tr>
-                <td colSpan="3" className="py-3 px-4 border-b text-center">No fonts available</td>
-              </tr>
+              <p className="text-sm sm:text-lg">Drag & Drop .ttf file here</p>
             )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+            {errorMessage && <p className="text-red-500 text-sm sm:text-md">{errorMessage}</p>}
+          </div>
+          {uploadMessage && <p className="mt-4 text-center text-sm sm:text-md">{uploadMessage}</p>}
+
+          <div className="overflow-x-auto my-5">
+            <b className="text-lg sm:text-xl">Our Fonts</b>
+            <p className="text-xs sm:text-sm text-gray-400 my-2">
+              Browse a list of Zepto fonts to build your font group.
+            </p>
+            <table className="min-w-full bg-white border my-2 border-gray-200 rounded-lg shadow-md">
+              <thead className="bg-gray-100 text-gray-600 uppercase text-xs sm:text-sm">
+                <tr className="text-left">
+                  <th className="py-3 px-4 border-b">Font Name</th>
+                  <th className="py-3 px-4 border-b">Preview</th>
+                  <th className="py-3 px-4 border-b">Action</th>
+                </tr>
+              </thead>
+              <tbody className="text-gray-700 text-xs sm:text-sm">
+                {fonts.length > 0 ? (
+                  fonts.map((font) => {
+                    const name = font.name.split('.')[0]; // Use the name part before the extension
+                    return (
+                      <tr key={font.id} className="hover:bg-zinc-50">
+                        <td className="py-3 px-4 border-b">
+                          {font.name}
+                        </td>
+                        <td className="py-3 px-4 border-b my-font" style={{ fontFamily: `${name}` }}>
+                          Example Style
+                        </td>
+                        <td className="py-3 px-4 border-b text-red-600 cursor-pointer">
+                          <button onClick={() => handleDeleteFont(font.id)}>Delete</button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="3" className="py-3 px-4 border-b text-center">No fonts available</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+    }
+
+
+  </>
+
   );
 };
 
